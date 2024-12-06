@@ -304,12 +304,6 @@ def metrics():
     metric_lines.append("# HELP train_delay_minutes Delay in minutes")
     metric_lines.append("# TYPE train_delay_minutes gauge")
 
-    metric_lines.append("# HELP train_planned_departure_platform Planned departure platform number")
-    metric_lines.append("# TYPE train_planned_departure_platform gauge")
-
-    metric_lines.append("# HELP train_actual_departure_platform Actual departure platform number")
-    metric_lines.append("# TYPE train_actual_departure_platform gauge")
-
     metric_lines.append("# HELP train_departure_event_status Event status for departure")
     metric_lines.append("# TYPE train_departure_event_status gauge")
 
@@ -328,7 +322,9 @@ def metrics():
             f'train_type="{clean_label(train["train_type"])}",'
             f'train_number="{clean_label(train["train_number"])}",'
             f'line="{clean_label(train["line"])}",'
-            f'destination="{clean_label(train["destination"])}"'
+            f'destination="{clean_label(train["destination"])}",'
+            f'actual_departure_platform="{clean_label(train["actual_departure_platform"])}",'
+            f'actual_arrival_platform="{clean_label(train["actual_arrival_platform"])}"'
         )
 
         # Planned departure
@@ -346,16 +342,6 @@ def metrics():
         # Delay
         if train["delay_minutes"] is not None:
             metric_lines.append(f'train_delay_minutes{{{labels}}} {train["delay_minutes"]}')
-
-        # Planned departure platform
-        planned_dp_platform = train.get("planned_departure_platform")
-        if planned_dp_platform and planned_dp_platform.isdigit():
-            metric_lines.append(f'train_planned_departure_platform{{{labels}}} {int(planned_dp_platform)}')
-
-        # Actual departure platform
-        actual_dp_platform = train.get("actual_departure_platform")
-        if actual_dp_platform and actual_dp_platform.isdigit():
-            metric_lines.append(f'train_actual_departure_platform{{{labels}}} {int(actual_dp_platform)}')
 
         # Departure event status
         departure_event_status = train.get("departure_event_status")
