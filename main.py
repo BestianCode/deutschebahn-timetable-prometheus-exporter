@@ -334,16 +334,16 @@ def metrics():
         # Planned departure
         planned_dt = parse_time_code(train["planned_departure_raw"])
         if planned_dt:
-#            planned_ts = int(planned_dt.timestamp())
-#            metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_ts}')
-            metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_dt}')
+            planned_dt_obj = datetime.datetime.strptime(planned_dt, "%Y-%m-%d %H:%M:%S")
+            planned_ts = int(planned_dt_obj.timestamp())
+            metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_ts}')
 
         # Actual departure
         actual_dt = parse_time_code(train["actual_departure_raw"]) if train["actual_departure_raw"] else None
         if actual_dt:
-#            actual_ts = int(actual_dt.timestamp())
-#            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_ts}')
-            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_dt}')
+            actual_dt_obj = datetime.datetime.strptime(actual_dt, "%Y-%m-%d %H:%M:%S")
+            actual_ts = int(actual_dt_obj.timestamp())
+            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_ts}')
 
         # Delay
         if train["delay_minutes"] is not None:
