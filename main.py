@@ -334,14 +334,16 @@ def metrics():
         # Planned departure
         planned_dt = parse_time_code(train["planned_departure_raw"])
         if planned_dt:
-            planned_ts = int(planned_dt.timestamp())
-            metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_ts}')
+#            planned_ts = int(planned_dt.timestamp())
+#            metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_ts}')
+            metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_dt}')
 
         # Actual departure
         actual_dt = parse_time_code(train["actual_departure_raw"]) if train["actual_departure_raw"] else None
         if actual_dt:
-            actual_ts = int(actual_dt.timestamp())
-            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_ts}')
+#            actual_ts = int(actual_dt.timestamp())
+#            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_ts}')
+            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_dt}')
 
         # Delay
         if train["delay_minutes"] is not None:
@@ -389,5 +391,5 @@ if __name__ == "__main__":
     fetch_thread.start()
 
     # Start the HTTP server
-    # The server will be available at http://localhost:5000/metrics
+    # The server will be available at http://localhost:8080/metrics
     app.run(host="0.0.0.0", port=8080)
