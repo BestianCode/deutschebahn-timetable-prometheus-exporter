@@ -66,7 +66,6 @@ for date_str, hour_str in dates_hours:
         dp = entry.get("dp", {})
         train_type = tl.get("@c")
         line_number = dp.get("@l")
-        # Add prefix 'S' if line_number is a single digit between '1' and '9'
         if line_number and line_number.isdigit() and 1 <= int(line_number) <= 9:
             line_number = f"S{line_number}"
         departure_time_str = dp.get("@pt")
@@ -77,7 +76,6 @@ for date_str, hour_str in dates_hours:
             hh = departure_time_str[6:8]
             minu = departure_time_str[8:10]
             year = "20" + yy
-            # Keep only time part
             departure_time_readable = f"{hh}:{minu}"
             departure_datetime = datetime.strptime(f"{year}-{mm}-{dd} {hh}:{minu}", "%Y-%m-%d %H:%M")
         else:
@@ -86,12 +84,14 @@ for date_str, hour_str in dates_hours:
         route = dp.get("@ppth", "")
         stations = route.split("|")
         destination = stations[-1] if stations else None
+        departure_platform = dp.get("@pp")
         delay = None
         if departure_datetime and now <= departure_datetime <= upper_limit:
             trains_info.append({
                 "line": line_number,
                 "departure_time": departure_time_readable,
                 "train_type": train_type,
+                "departure_platform": departure_platform,
                 "delay": delay,
                 "destination": destination
             })
