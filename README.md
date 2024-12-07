@@ -1,6 +1,6 @@
 # Deutsche Bahn Timetables Prometheus Exporter
 
-**A Flask application that fetches Deutsche Bahn train timetable data and exposes Prometheus metrics for one current station close to your office :)**
+**An application that fetches Deutsche Bahn train timetable data and exposes Prometheus metrics for one current station close to your office :)**
 
 ## Requirements
 
