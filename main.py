@@ -9,10 +9,8 @@ from flask import Flask, Response
 
 app = Flask(__name__)
 
-# Global variable to store the latest train information
 latest_trains_info = []
 
-# Interval in seconds for data updates (every 60 seconds = 1 minute)
 UPDATE_INTERVAL = 60
 
 def etree_to_dict(t):
@@ -65,7 +63,6 @@ def get_train_data_plan(date_str, hour_str):
         return {}
 
 def get_train_data_fchg():
-    # Fetch the fchg data for the station
     url = f"https://apis.deutschebahn.com/db-api-marketplace/apis/timetables/v1/fchg/{os.getenv('DB_STATION')}"
     headers = {
         "DB-Client-Id": os.getenv('DB_CLIENT_ID'),
@@ -86,8 +83,6 @@ def get_train_data_fchg():
         return {}
 
 def parse_time_code(time_code):
-    # Time codes are in format YYMMDDHHMM
-    # Example: "2412061230" = 2024-12-06 12:30
     if time_code and len(time_code) == 10:
         try:
             yy = time_code[0:2]
@@ -127,7 +122,6 @@ def fetch_and_update_data():
 
         trains_info = []
 
-        # Fetch planned data
         for date_str, hour_str in dates_hours:
             data = get_train_data_plan(date_str, hour_str)
             station_stops = data.get("timetable", {}).get("s", [])
@@ -139,13 +133,10 @@ def fetch_and_update_data():
                 dp = entry.get("dp", {})
                 ar = entry.get("ar", {})
 
-                # Extract trip data
                 train_type = tl.get("@c")
                 train_number = tl.get("@n")
-                # Create a unique trip_id by concatenating relevant fields
                 trip_id = f"{tl.get('@c')}_{tl.get('@n')}_{tl.get('@f', '')}_{tl.get('@t', '')}"
 
-                # Planned times
                 planned_departure_time_raw = dp.get("@pt")
                 planned_arrival_time_raw = ar.get("@pt")
 
@@ -161,7 +152,6 @@ def fetch_and_update_data():
 
                 departure_datetime = parse_time_code(planned_departure_time_raw)
 
-                # We only consider trains that depart within the defined time window
                 if departure_datetime and now <= departure_datetime <= upper_limit:
                     trains_info.append({
                         "trip_id": trip_id,
@@ -170,39 +160,31 @@ def fetch_and_update_data():
                         "train_number": train_number,
                         "destination": destination,
 
-                        # Planned times
                         "planned_departure_raw": planned_departure_time_raw,
                         "planned_departure_time": planned_departure_str,
                         "planned_arrival_raw": planned_arrival_time_raw,
                         "planned_arrival_time": planned_arrival_str,
 
-                        # Planned platforms
                         "planned_departure_platform": planned_departure_platform,
                         "planned_arrival_platform": planned_arrival_platform,
 
-                        # Actual times (to be updated from fchg)
                         "actual_departure_raw": None,
                         "actual_departure_time": None,
                         "actual_arrival_raw": None,
                         "actual_arrival_time": None,
 
-                        # Actual platforms
                         "actual_departure_platform": None,
                         "actual_arrival_platform": None,
 
-                        # Event statuses
                         "departure_event_status": dp.get("@eStatus"),
                         "arrival_event_status": ar.get("@eStatus"),
 
-                        # Delay source and delay info
                         "delay_source": None,
                         "delay_minutes": None,
 
-                        # Debug: store all found times from fchg
                         "debug_dates": []
                     })
 
-        # Fetch fchg data (actual changes)
         fchg_data = get_train_data_fchg()
         fchg_stations = fchg_data.get("timetable", {}).get("s", [])
         if isinstance(fchg_stations, dict):
@@ -213,24 +195,19 @@ def fetch_and_update_data():
             ar = fchg_station.get("ar", {})
             dp = fchg_station.get("dp", {})
 
-            # Create trip_id similar to plan data
             fchg_trip_id = f"{tl.get('@c')}_{tl.get('@n')}_{tl.get('@f', '')}_{tl.get('@t', '')}"
 
-            # Extract actual times
             actual_departure_raw = dp.get("@ct")
             actual_arrival_raw = ar.get("@ct")
 
             actual_departure_str = to_str_time(actual_departure_raw)
             actual_arrival_str = to_str_time(actual_arrival_raw)
 
-            # Actual platforms
             actual_departure_platform = dp.get("@cp")
             actual_arrival_platform = ar.get("@cp")
 
-            # Delay source
             delay_source = dp.get("@ds") or ar.get("@ds")
 
-            # Append debug info and update train in trains_info if trip_id matches
             for train in trains_info:
                 if train["trip_id"] == fchg_trip_id:
                     found_dates = {}
@@ -242,7 +219,6 @@ def fetch_and_update_data():
                     if found_dates:
                         train["debug_dates"].append(found_dates)
 
-                    # Update actual times
                     if actual_departure_raw:
                         train["actual_departure_raw"] = actual_departure_raw
                         train["actual_departure_time"] = actual_departure_str
@@ -250,23 +226,19 @@ def fetch_and_update_data():
                         train["actual_arrival_raw"] = actual_arrival_raw
                         train["actual_arrival_time"] = actual_arrival_str
 
-                    # Update actual platforms
                     if actual_departure_platform:
                         train["actual_departure_platform"] = actual_departure_platform
                     if actual_arrival_platform:
                         train["actual_arrival_platform"] = actual_arrival_platform
 
-                    # Update event statuses
                     if dp.get("@eStatus"):
                         train["departure_event_status"] = dp.get("@eStatus")
                     if ar.get("@eStatus"):
                         train["arrival_event_status"] = ar.get("@eStatus")
 
-                    # Update delay source
                     if delay_source:
                         train["delay_source"] = delay_source
 
-                    # Compute delay if both planned and actual departure times are known
                     planned_dt = parse_time_code(train["planned_departure_raw"])
                     actual_dt = parse_time_code(train["actual_departure_raw"])
                     if planned_dt and actual_dt:
@@ -274,10 +246,8 @@ def fetch_and_update_data():
                         delay_minutes = int(delay_delta.total_seconds() // 60)
                         train["delay_minutes"] = delay_minutes
 
-        # Sort by planned departure time (string conversion safe)
         trains_info_sorted = sorted(trains_info, key=lambda x: x["planned_departure_time"] or "")
 
-        # Update the global variable
         latest_trains_info = trains_info_sorted
 
         print(f"Data updated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {len(latest_trains_info)} trains found.")
@@ -317,7 +287,6 @@ def metrics():
     metric_lines.append("# TYPE train_delay_source gauge")
 
     for train in latest_trains_info:
-        # Clean labels to escape quotes and backslashes
         def clean_label(value):
             if value is None:
                 return ""
@@ -331,44 +300,36 @@ def metrics():
             f'destination="{clean_label(train["destination"])}"'
         )
 
-        # Planned departure
         planned_dt = parse_time_code(train["planned_departure_raw"])
         if planned_dt:
             planned_ts = int(planned_dt.timestamp())
             metric_lines.append(f'train_planned_departure_timestamp_seconds{{{labels}}} {planned_ts}')
+            actual_dt = parse_time_code(train["actual_departure_raw"]) if train["actual_departure_raw"] else None
+            if actual_dt:
+                actual_ts = int(actual_dt.timestamp())
+                metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_ts}')
+            else:
+                metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {planned_ts}')
 
-        # Actual departure
-        actual_dt = parse_time_code(train["actual_departure_raw"]) if train["actual_departure_raw"] else None
-        if actual_dt:
-            actual_ts = int(actual_dt.timestamp())
-            metric_lines.append(f'train_actual_departure_timestamp_seconds{{{labels}}} {actual_ts}')
-
-        # Delay
         if train["delay_minutes"] is not None:
             metric_lines.append(f'train_delay_minutes{{{labels}}} {train["delay_minutes"]}')
 
-        # Planned departure platform
         planned_dp_platform = train.get("planned_departure_platform")
         if planned_dp_platform and planned_dp_platform.isdigit():
             metric_lines.append(f'train_planned_departure_platform{{{labels}}} {int(planned_dp_platform)}')
 
-        # Actual departure platform
         actual_dp_platform = train.get("actual_departure_platform")
         if actual_dp_platform and actual_dp_platform.isdigit():
             metric_lines.append(f'train_actual_departure_platform{{{labels}}} {int(actual_dp_platform)}')
 
-        # Departure event status
         departure_event_status = train.get("departure_event_status")
         if departure_event_status:
-            # Map event status to numerical codes (e.g., p=1, a=2, c=3)
             status_mapping = {"p": 1, "a": 2, "c": 3}
             status_code = status_mapping.get(departure_event_status.lower(), 0)
             metric_lines.append(f'train_departure_event_status{{{labels}}} {status_code}')
 
-        # Delay source
         delay_source = train.get("delay_source")
         if delay_source:
-            # Map delay sources to numerical codes
             delay_source_mapping = {
                 "L": 1,  # LEIBIT
                 "NA": 2, # RISNE AUT
@@ -376,7 +337,7 @@ def metrics():
                 "V": 4,  # VDV Prognosen
                 "IA": 5, # ISTP AUT
                 "IM": 6, # ISTP MAN
-                "A": 7    # AUTOMATIC PROGNOSIS
+                "A": 7   # AUTOMATIC PROGNOSIS
             }
             source_code = delay_source_mapping.get(delay_source.upper(), 0)
             metric_lines.append(f'train_delay_source{{{labels}}} {source_code}')
@@ -384,10 +345,6 @@ def metrics():
     return Response("\n".join(metric_lines) + "\n", mimetype="text/plain")
 
 if __name__ == "__main__":
-    # Start background thread to update train data
     fetch_thread = threading.Thread(target=fetch_and_update_data, daemon=True)
     fetch_thread.start()
-
-    # Start the HTTP server
-    # The server will be available at http://localhost:5000/metrics
     app.run(host="0.0.0.0", port=8080)
