@@ -127,3 +127,7 @@ train_delay_minutes{train_id="ICE_1234__p",train_type="ICE",train_number="1234",
 
 This project is licensed under BSD 2-Clause License.
 
+## URLs
+
+- **GitHub**: https://github.com/BestianCode/deutschebahn.timetable.prometheus.exporter
+- **DockerHub**: https://hub.docker.com/r/bestian/deutschebahn.timetable.prometheus.exporter
