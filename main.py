@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 import threading
 import time
-from flask import Flask, Response
+from flask import Flask, Response, jsonify
 
 app = Flask(__name__)
 
@@ -253,6 +253,10 @@ def fetch_and_update_data():
         print(f"Data updated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {len(latest_trains_info)} trains found.")
 
         time.sleep(UPDATE_INTERVAL)
+
+@app.route("/json")
+def json_endpoint():
+    return Response(json.dumps(latest_trains_info, indent=4), mimetype='application/json')
 
 @app.route("/metrics")
 def metrics():

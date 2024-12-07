@@ -50,13 +50,22 @@
 
 6. **Access the metrics:**
 
-    Open your browser or use `curl` to access `http://localhost:8080/metrics`.
+    Open your browser or use `curl` to acces:
+    - `http://localhost:8080/metrics` to get data in Prometheus format
+    - `http://localhost:8080/json` to get data in pure json format
 
     ```bash
     curl http://localhost:8080/metrics
+    curl http://localhost:8080/json
     ```
 
 ## Endpoints
+
+### `/json`
+
+Exposes pure json metrics based on the latest train timetable data.
+
+- **URL:** `http://localhost:8080/json`
 
 ### `/metrics`
 
