@@ -2,12 +2,6 @@
 
 **An application that fetches Deutsche Bahn train timetable data and exposes Prometheus metrics for one current station close to your office :)**
 
-## Requirements
-
-- Python 3.7+
-- Flask
-- Requests
-
 ## How to run it locally
 
 1. **Clone the repository:**
@@ -30,11 +24,7 @@
     pip install -r requirements.txt
     ```
 
-## Configuration
-
-Set the following environment variables to configure the application:
-
-### Environment Variables
+4. **Set environment Variables:**
 
 ```bash
 # Deutsche Bahn API Client ID
@@ -52,33 +42,13 @@ export DB_STATION="8004128" # Donnersbergerbrücke
 # Full list of the codes can be found in `UIC-Bahnhofsnummer.csv` file.
 ```
 
-### Example `.env` File
-
-Create a `.env` file in the project root with the following content:
-
-```bash
-export DB_CLIENT_ID="your_client_id"
-export DB_CLIENT_SECRET="your_client_secret"
-export KEEP_MINUTES=30
-export DB_STATION="8004128" # Donnersbergerbrücke
-# export DB_STATION="8011160" # Berlin Hbf
-```
-
-Load the environment variables:
-
-```bash
-source .env
-```
-
-## Usage
-
-1. **Run the application:**
+5. **Run the application:**
 
     ```bash
     python main.py
     ```
 
-2. **Access the metrics:**
+6. **Access the metrics:**
 
     Open your browser or use `curl` to access `http://localhost:8080/metrics`.
 
