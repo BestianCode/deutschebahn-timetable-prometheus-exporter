@@ -93,6 +93,19 @@ train_delay_minutes{train_id="ICE_1234__p",train_type="ICE",train_number="1234",
 ...
 ```
 
+## Usage
+
+This exporter is designed to be used as a base image in Helm charts or other Kubernetes deployments to expose Prometheus metrics for files in a directory.
+
+## Kubernetes Deployment annotations
+
+```yaml
+    annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: 8080
+        prometheus.io/scrape: "true"
+```
+
 ## License
 
 This project is licensed under BSD 2-Clause License.
