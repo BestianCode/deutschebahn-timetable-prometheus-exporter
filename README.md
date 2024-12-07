@@ -26,21 +26,21 @@
 
 4. **Set environment Variables:**
 
-```bash
-# Deutsche Bahn API Client ID
-export DB_CLIENT_ID="your_client_id"
+    ```bash
+    # Deutsche Bahn API Client ID
+    export DB_CLIENT_ID="your_client_id"
 
-# Deutsche Bahn API Client Secret
-export DB_CLIENT_SECRET="your_client_secret"
+    # Deutsche Bahn API Client Secret
+    export DB_CLIENT_SECRET="your_client_secret"
 
-# Number of minutes to keep train data (default is 30)
-export KEEP_MINUTES=30
+    # Number of minutes to keep train data (default is 30)
+    export KEEP_MINUTES=30
 
-# EVA station number
-export DB_STATION="8004128" # Donnersbergerbrücke
-# export DB_STATION="8011160" # Berlin Hbf
-# Full list of the codes can be found in `UIC-Bahnhofsnummer.csv` file.
-```
+    # EVA station number
+    export DB_STATION="8004128" # Donnersbergerbrücke
+    # export DB_STATION="8011160" # Berlin Hbf
+    # Full list of the codes can be found in `UIC-Bahnhofsnummer.csv` file.
+    ```
 
 5. **Run the application:**
 
