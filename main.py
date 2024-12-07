@@ -63,7 +63,8 @@ def get_train_data_plan(date_str, hour_str):
         return {}
 
 def get_train_data_fchg():
-    url = f"https://apis.deutschebahn.com/db-api-marketplace/apis/timetables/v1/fchg/{os.getenv('DB_STATION')}"
+    #url = f"https://apis.deutschebahn.com/db-api-marketplace/apis/timetables/v1/fchg/{os.getenv('DB_STATION')}"
+    url = f"https://apis.deutschebahn.com/db-api-marketplace/apis/timetables/v1/rchg/{os.getenv('DB_STATION')}"
     headers = {
         "DB-Client-Id": os.getenv('DB_CLIENT_ID'),
         "DB-Api-Key": os.getenv('DB_CLIENT_SECRET'),
@@ -129,6 +130,7 @@ def fetch_and_update_data():
                 station_stops = [station_stops]
 
             for entry in station_stops:
+                train_id = entry.get("@id")
                 tl = entry.get("tl", {})
                 dp = entry.get("dp", {})
                 ar = entry.get("ar", {})
@@ -154,6 +156,7 @@ def fetch_and_update_data():
 
                 if departure_datetime and now <= departure_datetime <= upper_limit:
                     trains_info.append({
+                        "id": train_id,  # Added ID field
                         "trip_id": trip_id,
                         "line": dp.get("@l") or ar.get("@l"),
                         "train_type": train_type,
@@ -182,6 +185,7 @@ def fetch_and_update_data():
                         "delay_source": None,
                         "delay_minutes": None,
 
+                        "additional_info": None,  # Additional field
                         "debug_dates": []
                     })
 
@@ -191,11 +195,9 @@ def fetch_and_update_data():
             fchg_stations = [fchg_stations]
 
         for fchg_station in fchg_stations:
-            tl = fchg_station.get("tl", {})
+            fchg_id = fchg_station.get("@id")  # Ensure correct attribute access
             ar = fchg_station.get("ar", {})
             dp = fchg_station.get("dp", {})
-
-            fchg_trip_id = f"{tl.get('@c')}_{tl.get('@n')}_{tl.get('@f', '')}_{tl.get('@t', '')}"
 
             actual_departure_raw = dp.get("@ct")
             actual_arrival_raw = ar.get("@ct")
@@ -209,7 +211,7 @@ def fetch_and_update_data():
             delay_source = dp.get("@ds") or ar.get("@ds")
 
             for train in trains_info:
-                if train["trip_id"] == fchg_trip_id:
+                if train["id"] == fchg_id:  # Changed from trip_id to id
                     found_dates = {}
                     if actual_arrival_raw:
                         found_dates["ar_ct"] = actual_arrival_raw
@@ -245,6 +247,13 @@ def fetch_and_update_data():
                         delay_delta = actual_dt - planned_dt
                         delay_minutes = int(delay_delta.total_seconds() // 60)
                         train["delay_minutes"] = delay_minutes
+
+                    # Add additional info from rchg
+                    train["additional_info"] = {
+                        "actual_departure_platform": actual_departure_platform,
+                        "actual_arrival_platform": actual_arrival_platform,
+                        "delay_source": delay_source
+                    }
 
         trains_info_sorted = sorted(trains_info, key=lambda x: x["planned_departure_time"] or "")
 
