@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 #export DB_CLIENT_ID="..."
 #export DB_CLIENT_SECRET="..."
 
@@ -8,4 +10,7 @@
 #export DB_STATION="8004128" # Donnersbergerbrücke
 #export DB_STATION="8011160" # Berlin Hbf
 
-python main.py
+while true; do
+    python3 main.py || true
+    sleep 1
+done
